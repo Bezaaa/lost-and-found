@@ -6,6 +6,7 @@ import { ReportStatus } from "@prisma/client";
 
 import { prisma } from "@/lib/db";
 import { requireUser } from "@/lib/session";
+import { recomputeMatchesForReport } from "@/lib/matching/service";
 import {
   createReportSchema,
   parseReportFormData,
@@ -32,8 +33,7 @@ export async function createReportAction(
     },
   });
 
-  // TODO(matching milestone): recompute potential matches for this report
-  // against active opposite-type reports once the matching module exists.
+  await recomputeMatchesForReport(report.id);
 
   revalidatePath("/reports");
   revalidatePath("/my-reports");
@@ -67,8 +67,7 @@ export async function updateReportAction(
     data: parsed.data,
   });
 
-  // TODO(matching milestone): recompute potential matches for this report,
-  // since its details (and therefore its match scores) may have changed.
+  await recomputeMatchesForReport(reportId);
 
   revalidatePath(`/reports/${reportId}`);
   revalidatePath("/reports");
