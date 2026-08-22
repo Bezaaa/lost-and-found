@@ -1,0 +1,105 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+enum ReportType {
+  LOST
+  FOUND
+}
+
+enum ReportStatus {
+  ACTIVE
+  RESOLVED
+}
+
+enum ItemCategory {
+  ELECTRONICS
+  BAGS_AND_BACKPACKS
+  KEYS
+  WALLETS_AND_CARDS
+  CLOTHING_AND_ACCESSORIES
+  JEWELRY_AND_WATCHES
+  DOCUMENTS_AND_IDS
+  BOOKS_AND_STATIONERY
+  OTHER
+}
+
+enum TimeOfDay {
+  MORNING
+  AFTERNOON
+  EVENING
+  NIGHT
+}
+
+model User {
+  id           String   @id @default(cuid())
+  email        String   @unique
+  passwordHash String
+  name         String
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  reports      Report[]
+}
+
+model Report {
+  id             String       @id @default(cuid())
+
+  reporterId     String
+  reporter       User         @relation(fields: [reporterId], references: [id], onDelete: Cascade)
+
+  type           ReportType
+  status         ReportStatus @default(ACTIVE)
+
+  category       ItemCategory
+  itemName       String
+  description    String
+
+  date           DateTime     @db.Date
+  timeOfDay      TimeOfDay?
+
+  location       String
+  locationDetail String?
+
+  color          String?
+  brand          String?
+  imageUrl       String?
+
+  contactInfo    String
+
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+  resolvedAt     DateTime?
+
+  matchesAsLost  PotentialMatch[] @relation("LostReportMatches")
+  matchesAsFound PotentialMatch[] @relation("FoundReportMatches")
+
+  @@index([type, status])
+  @@index([reporterId])
+  @@index([category])
+  @@index([createdAt])
+}
+
+model PotentialMatch {
+  id            String @id @default(cuid())
+
+  lostReportId  String
+  lostReport    Report @relation("LostReportMatches", fields: [lostReportId], references: [id], onDelete: Cascade)
+
+  foundReportId String
+  foundReport   Report @relation("FoundReportMatches", fields: [foundReportId], references: [id], onDelete: Cascade)
+
+  score         Int
+  reasons       Json
+
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  @@unique([lostReportId, foundReportId])
+  @@index([foundReportId])
+  @@index([score])
+}
