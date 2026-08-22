@@ -1,3 +1,5 @@
+import Link from "next/link";
+
 import { logoutAction } from "@/lib/actions/auth-actions";
 import { requireUser } from "@/lib/session";
 
@@ -10,6 +12,11 @@ export default async function Home() {
         Signed in as {user.name ?? user.email}
       </h1>
       <p className="text-zinc-600 dark:text-zinc-400">{user.email}</p>
+      <nav className="flex gap-4 text-sm font-medium underline">
+        <Link href="/reports">Reports</Link>
+        <Link href="/my-reports">My Reports</Link>
+        <Link href="/reports/new">Create Report</Link>
+      </nav>
       <form action={logoutAction}>
         <button
           type="submit"
