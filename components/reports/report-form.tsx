@@ -1,13 +1,15 @@
 "use client";
 
-import { useActionState } from "react";
+import { useActionState, useState } from "react";
 import { ItemCategory, ReportType, TimeOfDay } from "@prisma/client";
 
 import type { ReportFormState } from "@/lib/actions/report-actions";
 import { CATEGORY_LABELS, TIME_OF_DAY_LABELS } from "@/lib/reports/labels";
-
-const inputClass =
-  "rounded border border-zinc-300 px-3 py-2 text-sm dark:border-zinc-700 dark:bg-zinc-900";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Select } from "@/components/ui/select";
+import { Textarea } from "@/components/ui/textarea";
 
 export type ReportFormDefaults = Partial<{
   type: ReportType;
@@ -24,61 +26,97 @@ export type ReportFormDefaults = Partial<{
   contactInfo: string;
 }>;
 
+type FormValues = {
+  type: ReportType;
+  category: ItemCategory | "";
+  itemName: string;
+  description: string;
+  date: string;
+  timeOfDay: TimeOfDay | "";
+  location: string;
+  locationDetail: string;
+  color: string;
+  brand: string;
+  imageUrl: string;
+  contactInfo: string;
+};
+
+function toFormValues(defaults?: ReportFormDefaults): FormValues {
+  return {
+    type: defaults?.type ?? ReportType.LOST,
+    category: defaults?.category ?? "",
+    itemName: defaults?.itemName ?? "",
+    description: defaults?.description ?? "",
+    date: defaults?.date ?? "",
+    timeOfDay: defaults?.timeOfDay ?? "",
+    location: defaults?.location ?? "",
+    locationDetail: defaults?.locationDetail ?? "",
+    color: defaults?.color ?? "",
+    brand: defaults?.brand ?? "",
+    imageUrl: defaults?.imageUrl ?? "",
+    contactInfo: defaults?.contactInfo ?? "",
+  };
+}
+
 export function ReportForm({
   action,
   defaults,
   submitLabel,
-  fixedType,
 }: {
   action: (state: ReportFormState, formData: FormData) => Promise<ReportFormState>;
   defaults?: ReportFormDefaults;
   submitLabel: string;
-  /** When set, the report type is fixed (edit mode) instead of user-selectable (create mode). */
-  fixedType?: ReportType;
 }) {
   const [state, formAction, pending] = useActionState(action, undefined);
 
-  return (
-    <form action={formAction} className="flex w-full max-w-xl flex-col gap-4">
-      {fixedType ? (
-        <input type="hidden" name="type" value={fixedType} />
-      ) : (
-        <fieldset className="flex flex-col gap-1">
-          <legend className="text-sm font-medium">Report type</legend>
-          <div className="flex gap-4">
-            <label className="flex items-center gap-2 text-sm">
-              <input
-                type="radio"
-                name="type"
-                value={ReportType.LOST}
-                defaultChecked={defaults?.type !== ReportType.FOUND}
-                required
-              />
-              Lost
-            </label>
-            <label className="flex items-center gap-2 text-sm">
-              <input
-                type="radio"
-                name="type"
-                value={ReportType.FOUND}
-                defaultChecked={defaults?.type === ReportType.FOUND}
-              />
-              Found
-            </label>
-          </div>
-        </fieldset>
-      )}
+  // Controlled fields: React 19 resets uncontrolled <form action> fields after
+  // every submission, success or failure. Without this, a validation error
+  // would wipe out everything the user had just typed.
+  const [values, setValues] = useState<FormValues>(() => toFormValues(defaults));
 
-      <div className="flex flex-col gap-1">
-        <label htmlFor="category" className="text-sm font-medium">
-          Category
-        </label>
-        <select
+  function set<K extends keyof FormValues>(key: K, value: FormValues[K]) {
+    setValues((prev) => ({ ...prev, [key]: value }));
+  }
+
+  return (
+    <form action={formAction} className="flex flex-col gap-5">
+      <fieldset className="flex flex-col gap-2">
+        <legend className="text-sm font-medium text-foreground">Report type</legend>
+        <div className="flex gap-6">
+          <label className="flex items-center gap-2 text-sm text-foreground">
+            <input
+              type="radio"
+              name="type"
+              value={ReportType.LOST}
+              checked={values.type === ReportType.LOST}
+              onChange={() => set("type", ReportType.LOST)}
+              required
+              className="accent-rose-600"
+            />
+            Lost
+          </label>
+          <label className="flex items-center gap-2 text-sm text-foreground">
+            <input
+              type="radio"
+              name="type"
+              value={ReportType.FOUND}
+              checked={values.type === ReportType.FOUND}
+              onChange={() => set("type", ReportType.FOUND)}
+              className="accent-teal-600"
+            />
+            Found
+          </label>
+        </div>
+      </fieldset>
+
+      <div className="flex flex-col gap-1.5">
+        <Label htmlFor="category">Category</Label>
+        <Select
           id="category"
           name="category"
-          defaultValue={defaults?.category ?? ""}
+          value={values.category}
+          onChange={(e) => set("category", e.target.value as ItemCategory)}
           required
-          className={inputClass}
         >
           <option value="" disabled>
             Select a category
@@ -88,61 +126,53 @@ export function ReportForm({
               {CATEGORY_LABELS[value]}
             </option>
           ))}
-        </select>
+        </Select>
       </div>
 
-      <div className="flex flex-col gap-1">
-        <label htmlFor="itemName" className="text-sm font-medium">
-          Item name
-        </label>
-        <input
+      <div className="flex flex-col gap-1.5">
+        <Label htmlFor="itemName">Item name</Label>
+        <Input
           id="itemName"
           name="itemName"
           type="text"
-          defaultValue={defaults?.itemName}
+          value={values.itemName}
+          onChange={(e) => set("itemName", e.target.value)}
           required
-          className={inputClass}
         />
       </div>
 
-      <div className="flex flex-col gap-1">
-        <label htmlFor="description" className="text-sm font-medium">
-          Description
-        </label>
-        <textarea
+      <div className="flex flex-col gap-1.5">
+        <Label htmlFor="description">Description</Label>
+        <Textarea
           id="description"
           name="description"
           rows={4}
-          defaultValue={defaults?.description}
+          value={values.description}
+          onChange={(e) => set("description", e.target.value)}
           required
-          className={inputClass}
         />
       </div>
 
-      <div className="flex gap-4">
-        <div className="flex flex-1 flex-col gap-1">
-          <label htmlFor="date" className="text-sm font-medium">
-            Date
-          </label>
-          <input
+      <div className="grid grid-cols-2 gap-4">
+        <div className="flex flex-col gap-1.5">
+          <Label htmlFor="date">Date</Label>
+          <Input
             id="date"
             name="date"
             type="date"
-            defaultValue={defaults?.date}
+            value={values.date}
+            onChange={(e) => set("date", e.target.value)}
             required
-            className={inputClass}
           />
         </div>
 
-        <div className="flex flex-1 flex-col gap-1">
-          <label htmlFor="timeOfDay" className="text-sm font-medium">
-            Approximate time (optional)
-          </label>
-          <select
+        <div className="flex flex-col gap-1.5">
+          <Label htmlFor="timeOfDay">Approximate time (optional)</Label>
+          <Select
             id="timeOfDay"
             name="timeOfDay"
-            defaultValue={defaults?.timeOfDay ?? ""}
-            className={inputClass}
+            value={values.timeOfDay}
+            onChange={(e) => set("timeOfDay", e.target.value as TimeOfDay | "")}
           >
             <option value="">Unspecified</option>
             {Object.values(TimeOfDay).map((value) => (
@@ -150,101 +180,85 @@ export function ReportForm({
                 {TIME_OF_DAY_LABELS[value]}
               </option>
             ))}
-          </select>
+          </Select>
         </div>
       </div>
 
-      <div className="flex flex-col gap-1">
-        <label htmlFor="location" className="text-sm font-medium">
-          Location
-        </label>
-        <input
+      <div className="flex flex-col gap-1.5">
+        <Label htmlFor="location">Location</Label>
+        <Input
           id="location"
           name="location"
           type="text"
-          defaultValue={defaults?.location}
+          value={values.location}
+          onChange={(e) => set("location", e.target.value)}
           required
-          className={inputClass}
         />
       </div>
 
-      <div className="flex flex-col gap-1">
-        <label htmlFor="locationDetail" className="text-sm font-medium">
-          Additional location detail (optional)
-        </label>
-        <input
+      <div className="flex flex-col gap-1.5">
+        <Label htmlFor="locationDetail">Additional location detail (optional)</Label>
+        <Input
           id="locationDetail"
           name="locationDetail"
           type="text"
-          defaultValue={defaults?.locationDetail ?? ""}
-          className={inputClass}
+          value={values.locationDetail}
+          onChange={(e) => set("locationDetail", e.target.value)}
         />
       </div>
 
-      <div className="flex gap-4">
-        <div className="flex flex-1 flex-col gap-1">
-          <label htmlFor="color" className="text-sm font-medium">
-            Color (optional)
-          </label>
-          <input
+      <div className="grid grid-cols-2 gap-4">
+        <div className="flex flex-col gap-1.5">
+          <Label htmlFor="color">Color (optional)</Label>
+          <Input
             id="color"
             name="color"
             type="text"
-            defaultValue={defaults?.color ?? ""}
-            className={inputClass}
+            value={values.color}
+            onChange={(e) => set("color", e.target.value)}
           />
         </div>
 
-        <div className="flex flex-1 flex-col gap-1">
-          <label htmlFor="brand" className="text-sm font-medium">
-            Brand (optional)
-          </label>
-          <input
+        <div className="flex flex-col gap-1.5">
+          <Label htmlFor="brand">Brand (optional)</Label>
+          <Input
             id="brand"
             name="brand"
             type="text"
-            defaultValue={defaults?.brand ?? ""}
-            className={inputClass}
+            value={values.brand}
+            onChange={(e) => set("brand", e.target.value)}
           />
         </div>
       </div>
 
-      <div className="flex flex-col gap-1">
-        <label htmlFor="imageUrl" className="text-sm font-medium">
-          Image URL (optional)
-        </label>
-        <input
+      <div className="flex flex-col gap-1.5">
+        <Label htmlFor="imageUrl">Image URL (optional)</Label>
+        <Input
           id="imageUrl"
           name="imageUrl"
           type="url"
-          defaultValue={defaults?.imageUrl ?? ""}
-          className={inputClass}
+          value={values.imageUrl}
+          onChange={(e) => set("imageUrl", e.target.value)}
         />
       </div>
 
-      <div className="flex flex-col gap-1">
-        <label htmlFor="contactInfo" className="text-sm font-medium">
-          Contact information
-        </label>
-        <input
+      <div className="flex flex-col gap-1.5">
+        <Label htmlFor="contactInfo">Contact information</Label>
+        <Input
           id="contactInfo"
           name="contactInfo"
           type="text"
-          defaultValue={defaults?.contactInfo}
+          value={values.contactInfo}
+          onChange={(e) => set("contactInfo", e.target.value)}
           required
-          className={inputClass}
         />
       </div>
 
-      {state?.error && <p className="text-sm text-red-600">{state.error}</p>}
+      {state?.error && <p className="text-sm text-destructive">{state.error}</p>}
 
-      <button
-        type="submit"
-        disabled={pending}
-        className="rounded bg-zinc-900 px-4 py-2 text-sm font-medium text-white disabled:opacity-50 dark:bg-white dark:text-black"
-      >
+      <Button type="submit" disabled={pending} className="mt-1 self-start">
         {pending ? "Saving..." : submitLabel}
-      </button>
+      </Button>
     </form>
   );
 }

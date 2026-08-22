@@ -1,9 +1,14 @@
 import Link from "next/link";
+import { Search } from "lucide-react";
 import { ReportType } from "@prisma/client";
 
 import { getActiveReports } from "@/lib/reports/queries";
 import { requireUser } from "@/lib/session";
 import { ReportListItem } from "@/components/reports/report-list-item";
+import { Button, buttonVariants } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Select } from "@/components/ui/select";
+import { cn } from "@/lib/utils";
 
 function parseType(value: string | undefined): ReportType | undefined {
   return value === ReportType.LOST || value === ReportType.FOUND ? value : undefined;
@@ -37,36 +42,41 @@ export default async function ReportsPage({
   }
 
   return (
-    <div className="mx-auto flex w-full max-w-3xl flex-col gap-6 px-4 py-12">
+    <div className="mx-auto flex w-full max-w-3xl flex-col gap-6">
       <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-semibold">Active reports</h1>
-        <Link href="/reports/new" className="text-sm font-medium underline">
-          + New report
+        <div>
+          <h1 className="text-2xl font-semibold text-foreground">Active reports</h1>
+          <p className="mt-1 text-sm text-muted-foreground">
+            Browse everything currently reported lost or found on campus.
+          </p>
+        </div>
+        <Link href="/reports/new" className={cn(buttonVariants({ size: "sm" }))}>
+          New report
         </Link>
       </div>
 
       <form className="flex flex-wrap gap-3" method="GET">
-        <select name="type" defaultValue={type ?? ""} className="rounded border border-zinc-300 px-3 py-2 text-sm dark:border-zinc-700 dark:bg-zinc-900">
-          <option value="">All</option>
+        <Select name="type" defaultValue={type ?? ""} className="w-36">
+          <option value="">All types</option>
           <option value={ReportType.LOST}>Lost</option>
           <option value={ReportType.FOUND}>Found</option>
-        </select>
-        <input
-          type="text"
-          name="q"
-          defaultValue={query ?? ""}
-          placeholder="Search item, description, location..."
-          className="min-w-64 flex-1 rounded border border-zinc-300 px-3 py-2 text-sm dark:border-zinc-700 dark:bg-zinc-900"
-        />
-        <button
-          type="submit"
-          className="rounded bg-zinc-900 px-4 py-2 text-sm font-medium text-white dark:bg-white dark:text-black"
-        >
+        </Select>
+        <div className="relative min-w-64 flex-1">
+          <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
+          <Input
+            type="text"
+            name="q"
+            defaultValue={query ?? ""}
+            placeholder="Search item, description, location..."
+            className="pl-9"
+          />
+        </div>
+        <Button type="submit" variant="secondary">
           Search
-        </button>
+        </Button>
       </form>
 
-      <p className="text-sm text-zinc-600 dark:text-zinc-400">
+      <p className="text-sm text-muted-foreground">
         {total} active {total === 1 ? "report" : "reports"}
       </p>
 
@@ -75,29 +85,33 @@ export default async function ReportsPage({
           <ReportListItem key={report.id} report={report} />
         ))}
         {items.length === 0 && (
-          <p className="text-sm text-zinc-500">No reports match your filters.</p>
+          <p className="rounded-lg border border-dashed border-border p-8 text-center text-sm text-muted-foreground">
+            No reports match your filters.
+          </p>
         )}
       </ul>
 
-      <div className="flex items-center justify-between text-sm">
-        {currentPage > 1 ? (
-          <Link href={pageHref(currentPage - 1)} className="underline">
-            Previous
-          </Link>
-        ) : (
-          <span />
-        )}
-        <span className="text-zinc-500">
-          Page {currentPage} of {totalPages}
-        </span>
-        {currentPage < totalPages ? (
-          <Link href={pageHref(currentPage + 1)} className="underline">
-            Next
-          </Link>
-        ) : (
-          <span />
-        )}
-      </div>
+      {totalPages > 1 && (
+        <div className="flex items-center justify-between text-sm">
+          {currentPage > 1 ? (
+            <Link href={pageHref(currentPage - 1)} className="font-medium text-primary hover:underline">
+              Previous
+            </Link>
+          ) : (
+            <span />
+          )}
+          <span className="text-muted-foreground">
+            Page {currentPage} of {totalPages}
+          </span>
+          {currentPage < totalPages ? (
+            <Link href={pageHref(currentPage + 1)} className="font-medium text-primary hover:underline">
+              Next
+            </Link>
+          ) : (
+            <span />
+          )}
+        </div>
+      )}
     </div>
   );
 }

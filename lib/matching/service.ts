@@ -21,20 +21,18 @@ function toMatchable(report: Report): MatchableReport {
   };
 }
 
-/**
- * Recomputes every potential match involving one report against all currently
- * ACTIVE opposite-type reports, upserting qualifying pairs (score >=
- * MATCH_THRESHOLD) and removing any existing pair that no longer qualifies.
- *
- * No-ops for reports that don't exist or aren't ACTIVE (resolved reports
- * don't participate in matching). Call this after creating or editing an
- * ACTIVE report.
- */
+
 export async function recomputeMatchesForReport(reportId: string): Promise<void> {
   const report = await prisma.report.findUnique({ where: { id: reportId } });
   if (!report || report.status !== ReportStatus.ACTIVE) return;
 
   const oppositeType = report.type === ReportType.LOST ? ReportType.FOUND : ReportType.LOST;
+
+  if (report.type === ReportType.LOST) {
+    await prisma.potentialMatch.deleteMany({ where: { foundReportId: report.id } });
+  } else {
+    await prisma.potentialMatch.deleteMany({ where: { lostReportId: report.id } });
+  }
 
   const candidates = await prisma.report.findMany({
     where: { type: oppositeType, status: ReportStatus.ACTIVE },
@@ -59,7 +57,7 @@ export async function recomputeMatchesForReport(reportId: string): Promise<void>
         update: { score, reasons: reasonsJson },
       });
     } else {
-      // No longer qualifies (or never did): make sure no stale row lingers.
+      
       await prisma.potentialMatch.deleteMany({
         where: { lostReportId, foundReportId },
       });
@@ -67,12 +65,7 @@ export async function recomputeMatchesForReport(reportId: string): Promise<void>
   }
 }
 
-/**
- * Potential matches for a report, filtered to pairs where BOTH linked reports
- * are still ACTIVE. Rows for resolved reports are left in the database (per
- * the schema's design) but excluded here, so resolving a report immediately
- * stops it from participating in active matching without any extra write.
- */
+
 export async function getActiveMatchesForReport(reportId: string) {
   return prisma.potentialMatch.findMany({
     where: {
@@ -82,5 +75,32 @@ export async function getActiveMatchesForReport(reportId: string) {
     },
     orderBy: { score: "desc" },
     include: { lostReport: true, foundReport: true },
+  });
+}
+
+
+export async function getActiveMatchesForUser(userId: string) {
+  return prisma.potentialMatch.findMany({
+    where: {
+      lostReport: { status: ReportStatus.ACTIVE },
+      foundReport: { status: ReportStatus.ACTIVE },
+      OR: [{ lostReport: { reporterId: userId } }, { foundReport: { reporterId: userId } }],
+    },
+    orderBy: { score: "desc" },
+    include: {
+      lostReport: { include: { reporter: { select: { id: true, name: true } } } },
+      foundReport: { include: { reporter: { select: { id: true, name: true } } } },
+    },
+  });
+}
+
+
+export async function getMatchById(matchId: string) {
+  return prisma.potentialMatch.findUnique({
+    where: { id: matchId },
+    include: {
+      lostReport: { include: { reporter: { select: { id: true, name: true } } } },
+      foundReport: { include: { reporter: { select: { id: true, name: true } } } },
+    },
   });
 }

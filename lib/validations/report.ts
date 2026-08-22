@@ -42,12 +42,15 @@ const reportFieldsSchema = z.object({
     .max(200),
 });
 
-export const createReportSchema = reportFieldsSchema.extend({
+const reportFieldsWithTypeSchema = reportFieldsSchema.extend({
   type: z.enum(ReportType, { error: "Please select LOST or FOUND." }),
 });
 
-// A report's type is fixed at creation; edits can't change LOST <-> FOUND.
-export const updateReportSchema = reportFieldsSchema;
+export const createReportSchema = reportFieldsWithTypeSchema;
+
+// Editing may also change LOST <-> FOUND; the matching service reconciles
+// any stale PotentialMatch rows left over from the report's previous type.
+export const updateReportSchema = reportFieldsWithTypeSchema;
 
 export type CreateReportInput = z.infer<typeof createReportSchema>;
 export type UpdateReportInput = z.infer<typeof updateReportSchema>;
