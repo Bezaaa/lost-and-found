@@ -1,5 +1,11 @@
 import { defineConfig, env } from "prisma/config";
-process.loadEnvFile();
+
+
+try {
+  process.loadEnvFile();
+} catch {
+  
+}
 
 export default defineConfig({
   schema: "prisma/schema.prisma",

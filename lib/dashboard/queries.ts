@@ -8,11 +8,7 @@ import { getActiveMatchesForUser } from "@/lib/matching/service";
 const RECENT_REPORTS_LIMIT = 5;
 const STRONGEST_MATCHES_LIMIT = 2;
 
-/**
- * Aggregates data already available elsewhere (report counts, recent active
- * reports, the user's own matches) for the dashboard's lightweight summary.
- * No new backend behavior - purely read-side composition.
- */
+
 export async function getDashboardData(userId: string) {
   const [activeLostCount, activeFoundCount, recentReports, myMatches] = await Promise.all([
     prisma.report.count({ where: { status: ReportStatus.ACTIVE, type: ReportType.LOST } }),

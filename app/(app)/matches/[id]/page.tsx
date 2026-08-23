@@ -63,7 +63,7 @@ export default async function MatchDetailsPage({
   const reasons = match.reasons as unknown as SignalReason[];
   const gapDays = daysApart(match.lostReport.date, match.foundReport.date);
 
-  // Only surface a contact action for the side the viewer doesn't already own.
+
   const viewerOwnsLost = match.lostReport.reporterId === user.id;
   const viewerOwnsFound = match.foundReport.reporterId === user.id;
   const contactTarget = viewerOwnsLost && !viewerOwnsFound
