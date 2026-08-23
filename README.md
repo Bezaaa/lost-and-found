@@ -326,4 +326,4 @@ application.
 
 Repository: `https://github.com/Bezaaa/lost-and-found`
 
-Deployed application: `<production-url>`
+Deployed application: `(https://lost-and-found-nu-peach.vercel.app)`
