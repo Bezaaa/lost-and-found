@@ -79,19 +79,38 @@ export async function getActiveMatchesForReport(reportId: string) {
 }
 
 
-export async function getActiveMatchesForUser(userId: string) {
-  return prisma.potentialMatch.findMany({
-    where: {
-      lostReport: { status: ReportStatus.ACTIVE },
-      foundReport: { status: ReportStatus.ACTIVE },
-      OR: [{ lostReport: { reporterId: userId } }, { foundReport: { reporterId: userId } }],
-    },
-    orderBy: { score: "desc" },
-    include: {
-      lostReport: { include: { reporter: { select: { id: true, name: true } } } },
-      foundReport: { include: { reporter: { select: { id: true, name: true } } } },
-    },
-  });
+const MATCHES_PAGE_SIZE = 10;
+
+export async function getActiveMatchesForUser(userId: string, page?: number) {
+  const currentPage = Number.isFinite(page) && (page as number) > 0 ? Math.floor(page as number) : 1;
+
+  const where: Prisma.PotentialMatchWhereInput = {
+    lostReport: { status: ReportStatus.ACTIVE },
+    foundReport: { status: ReportStatus.ACTIVE },
+    OR: [{ lostReport: { reporterId: userId } }, { foundReport: { reporterId: userId } }],
+  };
+
+  const [items, total] = await Promise.all([
+    prisma.potentialMatch.findMany({
+      where,
+      orderBy: { score: "desc" },
+      skip: (currentPage - 1) * MATCHES_PAGE_SIZE,
+      take: MATCHES_PAGE_SIZE,
+      include: {
+        lostReport: { include: { reporter: { select: { id: true, name: true } } } },
+        foundReport: { include: { reporter: { select: { id: true, name: true } } } },
+      },
+    }),
+    prisma.potentialMatch.count({ where }),
+  ]);
+
+  return {
+    items,
+    total,
+    page: currentPage,
+    pageSize: MATCHES_PAGE_SIZE,
+    totalPages: Math.max(1, Math.ceil(total / MATCHES_PAGE_SIZE)),
+  };
 }
 
 
@@ -103,4 +122,45 @@ export async function getMatchById(matchId: string) {
       foundReport: { include: { reporter: { select: { id: true, name: true } } } },
     },
   });
+}
+
+export type MatchSummary = { count: number; bestScore: number };
+
+/**
+ * Batched match count + best score per report id, restricted to matches
+ * where both sides are still ACTIVE (same rule as getActiveMatchesForReport).
+ * Used by "My Reports" to show a lightweight match indicator per row without
+ * an N+1 query per report.
+ */
+export async function getMatchSummaryForReports(
+  reportIds: string[]
+): Promise<Map<string, MatchSummary>> {
+  const summary = new Map<string, MatchSummary>();
+  if (reportIds.length === 0) return summary;
+
+  const rows = await prisma.potentialMatch.findMany({
+    where: {
+      OR: [{ lostReportId: { in: reportIds } }, { foundReportId: { in: reportIds } }],
+      lostReport: { status: ReportStatus.ACTIVE },
+      foundReport: { status: ReportStatus.ACTIVE },
+    },
+    select: { lostReportId: true, foundReportId: true, score: true },
+  });
+
+  for (const row of rows) {
+    for (const reportId of [row.lostReportId, row.foundReportId]) {
+      if (!reportIds.includes(reportId)) continue;
+      const existing = summary.get(reportId);
+      if (!existing) {
+        summary.set(reportId, { count: 1, bestScore: row.score });
+      } else {
+        summary.set(reportId, {
+          count: existing.count + 1,
+          bestScore: Math.max(existing.bestScore, row.score),
+        });
+      }
+    }
+  }
+
+  return summary;
 }

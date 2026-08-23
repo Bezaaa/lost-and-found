@@ -10,7 +10,7 @@ export type MatchTier = {
 
 export function getMatchTier(score: number): MatchTier {
   if (score >= STRONG_MATCH_CUTOFF) {
-    return { label: "Strong match", badgeVariant: "strong", ringColorClassName: "stroke-emerald-500" };
+    return { label: "Strong match", badgeVariant: "strong", ringColorClassName: "stroke-indigo-400" };
   }
-  return { label: "Possible match", badgeVariant: "possible", ringColorClassName: "stroke-amber-500" };
+  return { label: "Possible match", badgeVariant: "possible", ringColorClassName: "stroke-amber-400" };
 }

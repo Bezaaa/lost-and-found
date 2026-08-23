@@ -4,7 +4,7 @@ import { getReportById } from "@/lib/reports/queries";
 import { requireUser } from "@/lib/session";
 import { updateReportAction } from "@/lib/actions/report-actions";
 import { ReportForm } from "@/components/reports/report-form";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 
 export default async function EditReportPage({
   params,
@@ -27,10 +27,7 @@ export default async function EditReportPage({
     <div className="mx-auto w-full max-w-2xl">
       <h1 className="mb-6 text-2xl font-semibold text-foreground">Edit report</h1>
       <Card>
-        <CardHeader>
-          <CardTitle className="text-base">Report details</CardTitle>
-        </CardHeader>
-        <CardContent>
+        <CardContent className="pt-6">
           <ReportForm
             action={boundUpdate}
             submitLabel="Save changes"

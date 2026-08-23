@@ -1,7 +1,7 @@
 import { createReportAction } from "@/lib/actions/report-actions";
 import { requireUser } from "@/lib/session";
 import { ReportForm } from "@/components/reports/report-form";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 
 export default async function NewReportPage() {
   const user = await requireUser();
@@ -15,11 +15,7 @@ export default async function NewReportPage() {
         </p>
       </div>
       <Card>
-        <CardHeader>
-          <CardTitle className="text-base">Report details</CardTitle>
-          <CardDescription>Required fields are marked automatically by the form.</CardDescription>
-        </CardHeader>
-        <CardContent>
+        <CardContent className="pt-6">
           <ReportForm
             action={createReportAction}
             defaults={{ contactInfo: user.email ?? "" }}

@@ -3,30 +3,30 @@
 :root {
   --radius: 0.5rem;
 
-  --background: #f8fafc;
-  --foreground: #0f172a;
+  --background: #131118;
+  --foreground: #f3f0eb;
 
-  --card: #ffffff;
-  --card-foreground: #0f172a;
+  --card: #1c1a24;
+  --card-foreground: #f3f0eb;
 
-  --primary: #4338ca;
+  --primary: #6366f1;
   --primary-foreground: #ffffff;
 
-  --secondary: #f1f5f9;
-  --secondary-foreground: #0f172a;
+  --secondary: #242231;
+  --secondary-foreground: #f3f0eb;
 
-  --muted: #f1f5f9;
-  --muted-foreground: #64748b;
+  --muted: #242231;
+  --muted-foreground: #a39dab;
 
-  --accent: #eef2ff;
-  --accent-foreground: #3730a3;
+  --accent: #292456;
+  --accent-foreground: #b4b8fc;
 
-  --destructive: #e11d48;
+  --destructive: #f43f5e;
   --destructive-foreground: #ffffff;
 
-  --border: #e2e8f0;
-  --input: #e2e8f0;
-  --ring: #6366f1;
+  --border: #2f2c3b;
+  --input: #322f3e;
+  --ring: #818cf8;
 }
 
 @theme inline {
@@ -58,10 +58,10 @@
 }
 
 /*
-  This product commits to a single light, neutral visual identity (deep
-  indigo/navy brand accent on a light slate background) rather than an
-  adaptive light/dark theme, so we deliberately don't mirror
-  prefers-color-scheme here.
+  This product commits to a single dark visual identity (a bright
+  indigo/blue-violet brand accent on a deep, slightly warm charcoal
+  background) rather than an adaptive light/dark theme, so we deliberately
+  don't mirror prefers-color-scheme here.
 */
 body {
   background: var(--background);

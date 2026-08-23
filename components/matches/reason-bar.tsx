@@ -10,7 +10,7 @@ export function ReasonBar({ reason }: { reason: SignalReason }) {
         <span className="font-medium text-foreground">{SIGNAL_LABELS[reason.signal]}</span>
         <span className="text-muted-foreground">{reason.applicable ? `${percent}%` : "n/a"}</span>
       </div>
-      <div className="mt-1 h-1.5 w-full overflow-hidden rounded-full bg-slate-100">
+      <div className="mt-1 h-1.5 w-full overflow-hidden rounded-full bg-stone-800">
         <div
           className="h-full rounded-full bg-primary"
           style={{ width: reason.applicable ? `${percent}%` : "0%" }}

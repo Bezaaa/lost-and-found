@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useActionState } from "react";
+import { useActionState, useState } from "react";
 
 import { loginAction } from "@/lib/actions/auth-actions";
 import { Button } from "@/components/ui/button";
@@ -11,6 +11,7 @@ import { Label } from "@/components/ui/label";
 
 export function LoginForm() {
   const [state, action, pending] = useActionState(loginAction, undefined);
+  const [email, setEmail] = useState("");
 
   return (
     <Card className="w-full max-w-sm">
@@ -22,7 +23,15 @@ export function LoginForm() {
         <form action={action} className="flex flex-col gap-4">
           <div className="flex flex-col gap-1.5">
             <Label htmlFor="email">Email</Label>
-            <Input id="email" name="email" type="email" required autoComplete="email" />
+            <Input
+              id="email"
+              name="email"
+              type="email"
+              required
+              autoComplete="email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+            />
           </div>
 
           <div className="flex flex-col gap-1.5">
@@ -36,7 +45,11 @@ export function LoginForm() {
             />
           </div>
 
-          {state?.error && <p className="text-sm text-destructive">{state.error}</p>}
+          {state?.error && (
+            <p role="alert" className="text-sm text-destructive">
+              {state.error}
+            </p>
+          )}
 
           <Button type="submit" disabled={pending} className="mt-2">
             {pending ? "Signing in..." : "Sign in"}

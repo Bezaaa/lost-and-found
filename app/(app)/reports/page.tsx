@@ -1,13 +1,12 @@
 import Link from "next/link";
-import { Search } from "lucide-react";
 import { ReportType } from "@prisma/client";
 
 import { getActiveReports } from "@/lib/reports/queries";
 import { requireUser } from "@/lib/session";
 import { ReportListItem } from "@/components/reports/report-list-item";
-import { Button, buttonVariants } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Select } from "@/components/ui/select";
+import { ReportFilters } from "@/components/reports/report-filters";
+import { PaginationControls } from "@/components/ui/pagination-controls";
+import { buttonVariants } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 
 function parseType(value: string | undefined): ReportType | undefined {
@@ -31,21 +30,15 @@ export default async function ReportsPage({
     page,
   });
 
-  const baseParams = new URLSearchParams();
-  if (type) baseParams.set("type", type);
-  if (query) baseParams.set("q", query);
-
-  function pageHref(targetPage: number) {
-    const params = new URLSearchParams(baseParams);
-    params.set("page", String(targetPage));
-    return `/reports?${params.toString()}`;
-  }
+  const preservedParams = new URLSearchParams();
+  if (type) preservedParams.set("type", type);
+  if (query) preservedParams.set("q", query);
 
   return (
     <div className="mx-auto flex w-full max-w-3xl flex-col gap-6">
-      <div className="flex items-center justify-between">
+      <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
-          <h1 className="text-2xl font-semibold text-foreground">Active reports</h1>
+          <h1 className="text-2xl font-semibold text-foreground">Reports</h1>
           <p className="mt-1 text-sm text-muted-foreground">
             Browse everything currently reported lost or found on campus.
           </p>
@@ -55,26 +48,7 @@ export default async function ReportsPage({
         </Link>
       </div>
 
-      <form className="flex flex-wrap gap-3" method="GET">
-        <Select name="type" defaultValue={type ?? ""} className="w-36">
-          <option value="">All types</option>
-          <option value={ReportType.LOST}>Lost</option>
-          <option value={ReportType.FOUND}>Found</option>
-        </Select>
-        <div className="relative min-w-64 flex-1">
-          <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
-          <Input
-            type="text"
-            name="q"
-            defaultValue={query ?? ""}
-            placeholder="Search item, description, location..."
-            className="pl-9"
-          />
-        </div>
-        <Button type="submit" variant="secondary">
-          Search
-        </Button>
-      </form>
+      <ReportFilters basePath="/reports" type={type} query={query} />
 
       <p className="text-sm text-muted-foreground">
         {total} active {total === 1 ? "report" : "reports"}
@@ -85,33 +59,21 @@ export default async function ReportsPage({
           <ReportListItem key={report.id} report={report} />
         ))}
         {items.length === 0 && (
-          <p className="rounded-lg border border-dashed border-border p-8 text-center text-sm text-muted-foreground">
-            No reports match your filters.
-          </p>
+          <li className="rounded-lg border border-dashed border-border p-10 text-center">
+            <p className="text-sm font-medium text-foreground">No reports match your filters</p>
+            <p className="mt-1 text-sm text-muted-foreground">
+              Try a different search term, or check back later as new reports come in.
+            </p>
+          </li>
         )}
       </ul>
 
-      {totalPages > 1 && (
-        <div className="flex items-center justify-between text-sm">
-          {currentPage > 1 ? (
-            <Link href={pageHref(currentPage - 1)} className="font-medium text-primary hover:underline">
-              Previous
-            </Link>
-          ) : (
-            <span />
-          )}
-          <span className="text-muted-foreground">
-            Page {currentPage} of {totalPages}
-          </span>
-          {currentPage < totalPages ? (
-            <Link href={pageHref(currentPage + 1)} className="font-medium text-primary hover:underline">
-              Next
-            </Link>
-          ) : (
-            <span />
-          )}
-        </div>
-      )}
+      <PaginationControls
+        basePath="/reports"
+        params={preservedParams}
+        currentPage={currentPage}
+        totalPages={totalPages}
+      />
     </div>
   );
 }

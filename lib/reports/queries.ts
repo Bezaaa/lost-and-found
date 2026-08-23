@@ -1,20 +1,33 @@
 import "server-only";
 
-import { Prisma, ReportStatus, ReportType } from "@prisma/client";
+import { ItemCategory, Prisma, ReportStatus, ReportType } from "@prisma/client";
 
 import { prisma } from "@/lib/db";
+import { CATEGORY_LABELS } from "@/lib/reports/labels";
 
 const PAGE_SIZE = 10;
+
+/** Category is an enum column, so Prisma can't `contains`-search it directly - match against the human-readable labels instead and search by the resulting enum values. */
+function matchingCategories(query: string): ItemCategory[] {
+  const q = query.toLowerCase();
+  return (Object.entries(CATEGORY_LABELS) as [ItemCategory, string][])
+    .filter(([, label]) => label.toLowerCase().includes(q))
+    .map(([value]) => value);
+}
 
 function searchClause(query: string | undefined): Prisma.ReportWhereInput | undefined {
   const q = query?.trim();
   if (!q) return undefined;
+
+  const categoryMatches = matchingCategories(q);
 
   return {
     OR: [
       { itemName: { contains: q, mode: "insensitive" } },
       { description: { contains: q, mode: "insensitive" } },
       { location: { contains: q, mode: "insensitive" } },
+      { brand: { contains: q, mode: "insensitive" } },
+      ...(categoryMatches.length > 0 ? [{ category: { in: categoryMatches } }] : []),
     ],
   };
 }

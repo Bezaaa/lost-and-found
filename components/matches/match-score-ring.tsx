@@ -18,7 +18,7 @@ export function MatchScoreRing({ score }: { score: number }) {
           r={RADIUS}
           fill="none"
           strokeWidth={STROKE_WIDTH}
-          className="stroke-slate-200"
+          className="stroke-stone-700"
         />
         <circle
           cx={SIZE / 2}

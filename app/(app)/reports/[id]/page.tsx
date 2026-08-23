@@ -48,7 +48,10 @@ export default async function ReportDetailPage({
   const boundResolve = resolveReportAction.bind(null, report.id);
 
   return (
-    <div className="mx-auto w-full max-w-2xl">
+    <div className="mx-auto flex w-full max-w-2xl flex-col gap-4">
+      <Link href="/reports" className="w-fit text-sm font-medium text-primary hover:underline">
+        ← Back to reports
+      </Link>
       <Card>
         <CardHeader className="gap-3">
           <div className="flex items-center gap-2">
@@ -104,7 +107,15 @@ export default async function ReportDetailPage({
 
           <div className="rounded-md bg-muted p-4 text-sm">
             <p className="font-medium text-foreground">Contact</p>
-            <p className="mt-0.5 text-muted-foreground">{report.contactInfo}</p>
+            <p className="mt-0.5 text-muted-foreground">
+              {report.contactInfo.includes("@") ? (
+                <a href={`mailto:${report.contactInfo}`} className="text-primary hover:underline">
+                  {report.contactInfo}
+                </a>
+              ) : (
+                report.contactInfo
+              )}
+            </p>
           </div>
 
           {isOwner && report.status === "ACTIVE" && (
